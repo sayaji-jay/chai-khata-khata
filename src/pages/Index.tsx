@@ -9,8 +9,13 @@ import { SalesTracker } from '@/components/SalesTracker';
 import { SimplePaymentManager } from '@/components/SimplePaymentManager';
 import { UserRoleSelector } from '@/components/UserRoleSelector';
 import { DashboardStats } from '@/components/DashboardStats';
-import { Users, Clock, Calendar, User } from 'lucide-react';
+import { LoginForm } from '@/components/LoginForm';
+import { CustomerDashboard } from '@/components/CustomerDashboard';
+import { DelivererDashboard } from '@/components/DelivererDashboard';
+import { Users, Clock, Calendar, User, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { User as UserType, Sale, DeliveryRecord } from '@/types';
+import { dummyUsers } from '@/data/dummyUsers';
 
 interface Customer {
   id: string;
@@ -20,22 +25,11 @@ interface Customer {
   joinDate: string;
 }
 
-interface Sale {
-  id: string;
-  customerId: string;
-  customerName: string;
-  quantity: number;
-  pricePerCup: number;
-  totalAmount: number;
-  date: string;
-  time: string;
-  isPaid: boolean;
-  paidAmount?: number;
-}
-
 const Index = () => {
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);
   const [userRole, setUserRole] = useState<'user' | 'admin'>('admin');
   const { toast } = useToast();
 
@@ -43,14 +37,38 @@ const Index = () => {
   useEffect(() => {
     const savedCustomers = localStorage.getItem('chaiWalaCustomers');
     const savedSales = localStorage.getItem('chaiWalaSales');
+    const savedDeliveries = localStorage.getItem('chaiWalaDeliveries');
+    const savedUser = localStorage.getItem('chaiWalaCurrentUser');
     const savedRole = localStorage.getItem('chaiWalaUserRole');
     
     if (savedCustomers) {
       setCustomers(JSON.parse(savedCustomers));
+    } else {
+      // Convert dummy users to customers format
+      const customerData = dummyUsers
+        .filter(u => u.role === 'customer')
+        .map(u => ({ 
+          id: u.id, 
+          name: u.name, 
+          phone: u.phone, 
+          address: u.address, 
+          joinDate: u.joinDate 
+        }));
+      setCustomers(customerData);
     }
+    
     if (savedSales) {
       setSales(JSON.parse(savedSales));
     }
+    
+    if (savedDeliveries) {
+      setDeliveries(JSON.parse(savedDeliveries));
+    }
+    
+    if (savedUser) {
+      setCurrentUser(JSON.parse(savedUser));
+    }
+    
     if (savedRole) {
       setUserRole(savedRole as 'user' | 'admin');
     }
@@ -66,8 +84,32 @@ const Index = () => {
   }, [sales]);
 
   useEffect(() => {
+    localStorage.setItem('chaiWalaDeliveries', JSON.stringify(deliveries));
+  }, [deliveries]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('chaiWalaCurrentUser', JSON.stringify(currentUser));
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
     localStorage.setItem('chaiWalaUserRole', userRole);
   }, [userRole]);
+
+  const handleLogin = (user: UserType) => {
+    setCurrentUser(user);
+    if (user.role === 'admin') {
+      setUserRole('admin');
+    } else {
+      setUserRole('user');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('chaiWalaCurrentUser');
+  };
 
   const addCustomer = (customer: Omit<Customer, 'id' | 'joinDate'>) => {
     const newCustomer: Customer = {
@@ -97,6 +139,32 @@ const Index = () => {
     });
   };
 
+  const addDelivery = (delivery: Omit<DeliveryRecord, 'id' | 'date' | 'time'>) => {
+    const now = new Date();
+    const newDelivery: DeliveryRecord = {
+      id: Date.now().toString(),
+      date: now.toISOString().split('T')[0],
+      time: now.toLocaleTimeString('en-IN', { hour12: false }),
+      ...delivery
+    };
+    setDeliveries(prev => [...prev, newDelivery]);
+    
+    // Also add to sales
+    const newSale: Sale = {
+      id: Date.now().toString() + '-sale',
+      customerId: delivery.customerId,
+      customerName: delivery.customerName,
+      quantity: delivery.quantity,
+      pricePerCup: 10,
+      totalAmount: delivery.quantity * 10,
+      date: now.toISOString().split('T')[0],
+      time: now.toLocaleTimeString('en-IN', { hour12: false }),
+      isPaid: false,
+      deliveredBy: delivery.deliveredBy
+    };
+    setSales(prev => [...prev, newSale]);
+  };
+
   const markPaymentDone = (saleId: string, paidAmount: number) => {
     setSales(prev => prev.map(sale => 
       sale.id === saleId ? { ...sale, isPaid: true, paidAmount } : sale
@@ -107,6 +175,35 @@ const Index = () => {
     });
   };
 
+  // Show login if no user is logged in
+  if (!currentUser) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
+
+  // Show customer dashboard for customers
+  if (currentUser.role === 'customer') {
+    return (
+      <CustomerDashboard 
+        user={currentUser} 
+        sales={sales} 
+        onLogout={handleLogout} 
+      />
+    );
+  }
+
+  // Show deliverer dashboard for deliverers
+  if (currentUser.role === 'deliverer') {
+    return (
+      <DelivererDashboard 
+        user={currentUser} 
+        deliveries={deliveries} 
+        onAddDelivery={addDelivery}
+        onLogout={handleLogout} 
+      />
+    );
+  }
+
+  // Admin dashboard (existing code)
   const totalSalesToday = sales.filter(sale => sale.date === new Date().toISOString().split('T')[0]);
   const totalRevenue = sales.reduce((sum, sale) => sum + (sale.paidAmount || sale.totalAmount), 0);
   const pendingPayments = sales.filter(sale => !sale.isPaid).reduce((sum, sale) => sum + sale.totalAmount, 0);
@@ -122,26 +219,24 @@ const Index = () => {
                 <span className="text-white font-bold text-lg">☕</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Chai Wala Dashboard</h1>
-                <p className="text-gray-600">Manage your chai business efficiently</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Chai Wala Dashboard</h1>
+                <p className="text-gray-600 text-sm sm:text-base">Welcome, {currentUser.name}</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant={userRole === 'admin' ? 'default' : 'secondary'} className="text-sm">
                 {userRole === 'admin' ? 'Admin Mode' : 'User Mode'}
               </Badge>
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Calendar className="w-4 h-4" />
-                <span>{new Date().toLocaleDateString('en-IN')}</span>
-                <Clock className="w-4 h-4 ml-4" />
-                <span>{new Date().toLocaleTimeString('en-IN')}</span>
-              </div>
+              <Button onClick={handleLogout} variant="outline" size="sm">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* User Role Selector */}
         <UserRoleSelector currentRole={userRole} onRoleChange={setUserRole} />
 
