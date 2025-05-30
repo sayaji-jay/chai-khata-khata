@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { calendar, clock, User, users } from 'lucide-react';
+import { Calendar, Clock, User, Users } from 'lucide-react';
 
 interface Sale {
   id: string;
@@ -115,11 +114,11 @@ export const PaymentManager = ({ sales, onUpdatePayment }: PaymentManagerProps) 
                               <p>{sale.quantity} cups × ₹{sale.pricePerCup} = <span className="font-semibold">₹{sale.totalAmount}</span></p>
                               <div className="flex items-center space-x-4 text-xs">
                                 <span className="flex items-center space-x-1">
-                                  <calendar className="w-3 h-3" />
+                                  <Calendar className="w-3 h-3" />
                                   <span>{new Date(sale.date).toLocaleDateString('en-IN')}</span>
                                 </span>
                                 <span className="flex items-center space-x-1">
-                                  <clock className="w-3 h-3" />
+                                  <Clock className="w-3 h-3" />
                                   <span>{sale.time}</span>
                                 </span>
                               </div>
@@ -163,11 +162,11 @@ export const PaymentManager = ({ sales, onUpdatePayment }: PaymentManagerProps) 
                               <p>{sale.quantity} cups × ₹{sale.pricePerCup} = <span className="font-semibold">₹{sale.totalAmount}</span></p>
                               <div className="flex items-center space-x-4 text-xs">
                                 <span className="flex items-center space-x-1">
-                                  <calendar className="w-3 h-3" />
+                                  <Calendar className="w-3 h-3" />
                                   <span>{new Date(sale.date).toLocaleDateString('en-IN')}</span>
                                 </span>
                                 <span className="flex items-center space-x-1">
-                                  <clock className="w-3 h-3" />
+                                  <Clock className="w-3 h-3" />
                                   <span>{sale.time}</span>
                                 </span>
                               </div>
@@ -197,7 +196,7 @@ export const PaymentManager = ({ sales, onUpdatePayment }: PaymentManagerProps) 
             <TabsContent value="summary" className="space-y-4">
               {customerTotals.length === 0 ? (
                 <div className="text-center py-12">
-                  <users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No pending payments</h3>
                   <p className="text-gray-600">All customer payments are up to date!</p>
                 </div>
