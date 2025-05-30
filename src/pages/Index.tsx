@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CustomerManager } from '@/components/CustomerManager';
 import { SalesTracker } from '@/components/SalesTracker';
-import { PaymentManager } from '@/components/PaymentManager';
+import { SimplePaymentManager } from '@/components/SimplePaymentManager';
+import { UserRoleSelector } from '@/components/UserRoleSelector';
 import { DashboardStats } from '@/components/DashboardStats';
 import { Users, Clock, Calendar, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -28,17 +30,20 @@ interface Sale {
   date: string;
   time: string;
   isPaid: boolean;
+  paidAmount?: number;
 }
 
 const Index = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [userRole, setUserRole] = useState<'user' | 'admin'>('admin');
   const { toast } = useToast();
 
   // Load data from localStorage on component mount
   useEffect(() => {
     const savedCustomers = localStorage.getItem('chaiWalaCustomers');
     const savedSales = localStorage.getItem('chaiWalaSales');
+    const savedRole = localStorage.getItem('chaiWalaUserRole');
     
     if (savedCustomers) {
       setCustomers(JSON.parse(savedCustomers));
@@ -46,9 +51,12 @@ const Index = () => {
     if (savedSales) {
       setSales(JSON.parse(savedSales));
     }
+    if (savedRole) {
+      setUserRole(savedRole as 'user' | 'admin');
+    }
   }, []);
 
-  // Save data to localStorage whenever customers or sales change
+  // Save data to localStorage whenever data changes
   useEffect(() => {
     localStorage.setItem('chaiWalaCustomers', JSON.stringify(customers));
   }, [customers]);
@@ -56,6 +64,10 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem('chaiWalaSales', JSON.stringify(sales));
   }, [sales]);
+
+  useEffect(() => {
+    localStorage.setItem('chaiWalaUserRole', userRole);
+  }, [userRole]);
 
   const addCustomer = (customer: Omit<Customer, 'id' | 'joinDate'>) => {
     const newCustomer: Customer = {
@@ -85,18 +97,18 @@ const Index = () => {
     });
   };
 
-  const updatePaymentStatus = (saleId: string, isPaid: boolean) => {
+  const markPaymentDone = (saleId: string, paidAmount: number) => {
     setSales(prev => prev.map(sale => 
-      sale.id === saleId ? { ...sale, isPaid } : sale
+      sale.id === saleId ? { ...sale, isPaid: true, paidAmount } : sale
     ));
     toast({
-      title: isPaid ? "Payment Received" : "Payment Marked Pending",
-      description: isPaid ? "Payment has been marked as received" : "Payment marked as pending",
+      title: "Payment Done",
+      description: `Payment of ₹${paidAmount} received and marked as done`,
     });
   };
 
   const totalSalesToday = sales.filter(sale => sale.date === new Date().toISOString().split('T')[0]);
-  const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+  const totalRevenue = sales.reduce((sum, sale) => sum + (sale.paidAmount || sale.totalAmount), 0);
   const pendingPayments = sales.filter(sale => !sale.isPaid).reduce((sum, sale) => sum + sale.totalAmount, 0);
 
   return (
@@ -114,17 +126,25 @@ const Index = () => {
                 <p className="text-gray-600">Manage your chai business efficiently</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date().toLocaleDateString('en-IN')}</span>
-              <Clock className="w-4 h-4 ml-4" />
-              <span>{new Date().toLocaleTimeString('en-IN')}</span>
+            <div className="flex items-center space-x-4">
+              <Badge variant={userRole === 'admin' ? 'default' : 'secondary'} className="text-sm">
+                {userRole === 'admin' ? 'Admin Mode' : 'User Mode'}
+              </Badge>
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Calendar className="w-4 h-4" />
+                <span>{new Date().toLocaleDateString('en-IN')}</span>
+                <Clock className="w-4 h-4 ml-4" />
+                <span>{new Date().toLocaleTimeString('en-IN')}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* User Role Selector */}
+        <UserRoleSelector currentRole={userRole} onRoleChange={setUserRole} />
+
         {/* Dashboard Stats */}
         <div className="mb-8">
           <DashboardStats 
@@ -212,15 +232,47 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="customers">
-            <CustomerManager customers={customers} onAddCustomer={addCustomer} />
+            {userRole === 'admin' ? (
+              <CustomerManager customers={customers} onAddCustomer={addCustomer} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customers</CardTitle>
+                  <CardDescription>Only admin can manage customers</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">Switch to admin mode to manage customers</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="sales">
-            <SalesTracker customers={customers} sales={sales} onAddSale={addSale} />
+            {userRole === 'admin' ? (
+              <SalesTracker customers={customers} sales={sales} onAddSale={addSale} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sales</CardTitle>
+                  <CardDescription>Only admin can record sales</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">Switch to admin mode to record sales</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="payments">
-            <PaymentManager sales={sales} onUpdatePayment={updatePaymentStatus} />
+            <SimplePaymentManager 
+              sales={sales} 
+              onMarkPaid={markPaymentDone} 
+              isAdmin={userRole === 'admin'}
+            />
           </TabsContent>
         </Tabs>
       </div>
