@@ -226,7 +226,7 @@ export const DelivererDashboard = ({ user, deliveries, onAddDelivery, onLogout }
                 ))}
               </div>
             )}
-          </div>
+          </CardContent>
         </Card>
       </div>
     </div>
