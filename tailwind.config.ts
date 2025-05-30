@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,31 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Chai themed colors
+				chai: {
+					50: '#fdf7f0',
+					100: '#faeee1',
+					200: '#f4dbc2',
+					300: '#ecc299',
+					400: '#e3a16e',
+					500: '#db8449',
+					600: '#cd6f3e',
+					700: '#ab5a36',
+					800: '#884832',
+					900: '#6f3c2b'
+				},
+				tea: {
+					50: '#f0f9ff',
+					100: '#e0f2fe',
+					200: '#bae6fd',
+					300: '#7dd3fc',
+					400: '#38bdf8',
+					500: '#0ea5e9',
+					600: '#0284c7',
+					700: '#0369a1',
+					800: '#075985',
+					900: '#0c4a6e'
 				}
 			},
 			borderRadius: {
