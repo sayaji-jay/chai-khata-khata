@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { CustomerManager } from '@/components/CustomerManager';
 import { SalesTracker } from '@/components/SalesTracker';
 import { PaymentManager } from '@/components/PaymentManager';
 import { DashboardStats } from '@/components/DashboardStats';
-import { users, clock, calendar, User } from 'lucide-react';
+import { Users, Clock, Calendar, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Customer {
@@ -116,9 +115,9 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <calendar className="w-4 h-4" />
+              <Calendar className="w-4 h-4" />
               <span>{new Date().toLocaleDateString('en-IN')}</span>
-              <clock className="w-4 h-4 ml-4" />
+              <Clock className="w-4 h-4 ml-4" />
               <span>{new Date().toLocaleTimeString('en-IN')}</span>
             </div>
           </div>
@@ -151,7 +150,7 @@ const Index = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <users className="w-5 h-5 text-chai-600" />
+                    <Users className="w-5 h-5 text-chai-600" />
                     <span>Recent Customers</span>
                   </CardTitle>
                 </CardHeader>
@@ -183,7 +182,7 @@ const Index = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <clock className="w-5 h-5 text-tea-600" />
+                    <Clock className="w-5 h-5 text-tea-600" />
                     <span>Today's Sales</span>
                   </CardTitle>
                 </CardHeader>

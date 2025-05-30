@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { clock, calendar, User } from 'lucide-react';
+import { Clock, Calendar, User } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -91,7 +90,7 @@ export const SalesTracker = ({ customers, sales, onAddSale }: SalesTrackerProps)
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center space-x-2">
-                <clock className="w-5 h-5 text-tea-600" />
+                <Clock className="w-5 h-5 text-tea-600" />
                 <span>Sales Tracker</span>
               </CardTitle>
               <CardDescription>
@@ -186,7 +185,7 @@ export const SalesTracker = ({ customers, sales, onAddSale }: SalesTrackerProps)
             </div>
           ) : sales.length === 0 ? (
             <div className="text-center py-12">
-              <clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No sales recorded yet</h3>
               <p className="text-gray-600 mb-4">Start recording your chai sales to track your business.</p>
               <Button 
@@ -201,7 +200,7 @@ export const SalesTracker = ({ customers, sales, onAddSale }: SalesTrackerProps)
               {sortedDates.map(date => (
                 <div key={date}>
                   <div className="flex items-center space-x-2 mb-3">
-                    <calendar className="w-4 h-4 text-gray-600" />
+                    <Calendar className="w-4 h-4 text-gray-600" />
                     <h3 className="text-lg font-semibold text-gray-900">
                       {new Date(date).toLocaleDateString('en-IN', { 
                         weekday: 'long', 
@@ -224,7 +223,7 @@ export const SalesTracker = ({ customers, sales, onAddSale }: SalesTrackerProps)
                               <div className="text-sm text-gray-600 space-y-1">
                                 <p>{sale.quantity} cups × ₹{sale.pricePerCup} = ₹{sale.totalAmount}</p>
                                 <p className="flex items-center space-x-1">
-                                  <clock className="w-3 h-3" />
+                                  <Clock className="w-3 h-3" />
                                   <span>{sale.time}</span>
                                 </p>
                               </div>

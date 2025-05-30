@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { User, users } from 'lucide-react';
+import { User, Users } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -49,7 +48,7 @@ export const CustomerManager = ({ customers, onAddCustomer }: CustomerManagerPro
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center space-x-2">
-                <users className="w-5 h-5 text-chai-600" />
+                <Users className="w-5 h-5 text-chai-600" />
                 <span>Customer Management</span>
               </CardTitle>
               <CardDescription>

@@ -1,6 +1,5 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { users, clock, calendar, User } from 'lucide-react';
+import { Users, Clock, Calendar, User } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -45,7 +44,7 @@ export const DashboardStats = ({
       <Card className="bg-gradient-to-r from-chai-500 to-chai-600 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium opacity-90">Total Customers</CardTitle>
-          <users className="h-4 w-4 opacity-90" />
+          <Users className="h-4 w-4 opacity-90" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{customers.length}</div>
@@ -58,7 +57,7 @@ export const DashboardStats = ({
       <Card className="bg-gradient-to-r from-tea-500 to-tea-600 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium opacity-90">Today's Sales</CardTitle>
-          <clock className="h-4 w-4 opacity-90" />
+          <Clock className="h-4 w-4 opacity-90" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{totalCupsToday}</div>
@@ -84,7 +83,7 @@ export const DashboardStats = ({
       <Card className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium opacity-90">Pending Payments</CardTitle>
-          <calendar className="h-4 w-4 opacity-90" />
+          <Calendar className="h-4 w-4 opacity-90" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">₹{pendingPayments}</div>
