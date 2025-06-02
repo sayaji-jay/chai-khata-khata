@@ -9,6 +9,185 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customers: {
+        Row: {
+          address: string
+          created_at: string | null
+          id: string
+          join_date: string | null
+          name: string
+          phone: string
+          qr_code: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          id?: string
+          join_date?: string | null
+          name: string
+          phone: string
+          qr_code?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          id?: string
+          join_date?: string | null
+          name?: string
+          phone?: string
+          qr_code?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_records: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          customer_name: string
+          delivered_by: string
+          delivery_date: string | null
+          delivery_time: string | null
+          id: string
+          quantity: number
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          customer_name: string
+          delivered_by: string
+          delivery_date?: string | null
+          delivery_time?: string | null
+          id?: string
+          quantity: number
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          customer_name?: string
+          delivered_by?: string
+          delivery_date?: string | null
+          delivery_time?: string | null
+          id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_records_delivered_by_fkey"
+            columns: ["delivered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          id: string
+          name: string
+          phone: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          id: string
+          name: string
+          phone: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          customer_name: string
+          delivered_by: string | null
+          delivered_by_name: string | null
+          id: string
+          is_paid: boolean | null
+          paid_amount: number | null
+          price_per_cup: number
+          quantity: number
+          sale_date: string | null
+          sale_time: string | null
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          customer_name: string
+          delivered_by?: string | null
+          delivered_by_name?: string | null
+          id?: string
+          is_paid?: boolean | null
+          paid_amount?: number | null
+          price_per_cup?: number
+          quantity: number
+          sale_date?: string | null
+          sale_time?: string | null
+          total_amount: number
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          customer_name?: string
+          delivered_by?: string | null
+          delivered_by_name?: string | null
+          id?: string
+          is_paid?: boolean | null
+          paid_amount?: number | null
+          price_per_cup?: number
+          quantity?: number
+          sale_date?: string | null
+          sale_time?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_delivered_by_fkey"
+            columns: ["delivered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Users: {
         Row: {
           created_at: string
@@ -35,7 +214,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "customer" | "deliverer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +329,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "customer", "deliverer"],
+    },
   },
 } as const

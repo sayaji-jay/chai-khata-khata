@@ -6,214 +6,117 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CustomerManager } from '@/components/CustomerManager';
 import { SalesTracker } from '@/components/SalesTracker';
 import { SimplePaymentManager } from '@/components/SimplePaymentManager';
-import { UserRoleSelector } from '@/components/UserRoleSelector';
 import { DashboardStats } from '@/components/DashboardStats';
-import { LoginForm } from '@/components/LoginForm';
 import { CustomerDashboard } from '@/components/CustomerDashboard';
 import { DelivererDashboard } from '@/components/DelivererDashboard';
-import { Users, Clock, Calendar, User, LogOut } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { User as UserType, Sale, DeliveryRecord } from '@/types';
-import { dummyUsers } from '@/data/dummyUsers';
-
-interface Customer {
-  id: string;
-  name: string;
-  phone: string;
-  address: string;
-  joinDate: string;
-}
+import { Auth } from '@/components/Auth';
+import { Users, Clock, User, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 
 const Index = () => {
-  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);
-  const [userRole, setUserRole] = useState<'user' | 'admin'>('admin');
-  const { toast } = useToast();
+  const { user, profile, loading: authLoading, logout } = useAuth();
+  const { 
+    customers, 
+    sales, 
+    deliveries, 
+    loading: dataLoading,
+    addCustomer, 
+    addSale, 
+    addDelivery, 
+    markPaymentDone 
+  } = useSupabaseData();
 
-  // Load data from localStorage on component mount
-  useEffect(() => {
-    const savedCustomers = localStorage.getItem('chaiWalaCustomers');
-    const savedSales = localStorage.getItem('chaiWalaSales');
-    const savedDeliveries = localStorage.getItem('chaiWalaDeliveries');
-    const savedUser = localStorage.getItem('chaiWalaCurrentUser');
-    const savedRole = localStorage.getItem('chaiWalaUserRole');
-    
-    if (savedCustomers) {
-      setCustomers(JSON.parse(savedCustomers));
-    } else {
-      // Convert dummy users to customers format
-      const customerData = dummyUsers
-        .filter(u => u.role === 'customer')
-        .map(u => ({ 
-          id: u.id, 
-          name: u.name, 
-          phone: u.phone, 
-          address: u.address, 
-          joinDate: u.joinDate 
-        }));
-      setCustomers(customerData);
-    }
-    
-    if (savedSales) {
-      setSales(JSON.parse(savedSales));
-    }
-    
-    if (savedDeliveries) {
-      setDeliveries(JSON.parse(savedDeliveries));
-    }
-    
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-    }
-    
-    if (savedRole) {
-      setUserRole(savedRole as 'user' | 'admin');
-    }
-  }, []);
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-chai-50 to-tea-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-chai-500 to-chai-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <span className="text-white font-bold text-lg">☕</span>
+          </div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Save data to localStorage whenever data changes
-  useEffect(() => {
-    localStorage.setItem('chaiWalaCustomers', JSON.stringify(customers));
-  }, [customers]);
-
-  useEffect(() => {
-    localStorage.setItem('chaiWalaSales', JSON.stringify(sales));
-  }, [sales]);
-
-  useEffect(() => {
-    localStorage.setItem('chaiWalaDeliveries', JSON.stringify(deliveries));
-  }, [deliveries]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('chaiWalaCurrentUser', JSON.stringify(currentUser));
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    localStorage.setItem('chaiWalaUserRole', userRole);
-  }, [userRole]);
-
-  const handleLogin = (user: UserType) => {
-    setCurrentUser(user);
-    if (user.role === 'admin') {
-      setUserRole('admin');
-    } else {
-      setUserRole('user');
-    }
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('chaiWalaCurrentUser');
-  };
-
-  const addCustomer = (customer: Omit<Customer, 'id' | 'joinDate'>) => {
-    const newCustomer: Customer = {
-      id: Date.now().toString(),
-      joinDate: new Date().toISOString().split('T')[0],
-      ...customer
-    };
-    setCustomers(prev => [...prev, newCustomer]);
-    toast({
-      title: "Customer Added",
-      description: `${customer.name} has been successfully onboarded!`,
-    });
-  };
-
-  const addSale = (sale: Omit<Sale, 'id' | 'date' | 'time'>) => {
-    const now = new Date();
-    const newSale: Sale = {
-      id: Date.now().toString(),
-      date: now.toISOString().split('T')[0],
-      time: now.toLocaleTimeString('en-IN', { hour12: false }),
-      ...sale
-    };
-    setSales(prev => [...prev, newSale]);
-    toast({
-      title: "Sale Recorded",
-      description: `${sale.quantity} cups for ${sale.customerName} recorded successfully!`,
-    });
-  };
-
-  const addDelivery = (delivery: Omit<DeliveryRecord, 'id' | 'date' | 'time'>) => {
-    const now = new Date();
-    const deliverer = dummyUsers.find(u => u.id === delivery.deliveredBy);
-    
-    const newDelivery: DeliveryRecord = {
-      id: Date.now().toString(),
-      date: now.toISOString().split('T')[0],
-      time: now.toLocaleTimeString('en-IN', { hour12: false }),
-      ...delivery
-    };
-    setDeliveries(prev => [...prev, newDelivery]);
-    
-    // Also add to sales with deliverer information
-    const newSale: Sale = {
-      id: Date.now().toString() + '-sale',
-      customerId: delivery.customerId,
-      customerName: delivery.customerName,
-      quantity: delivery.quantity,
-      pricePerCup: 10,
-      totalAmount: delivery.quantity * 10,
-      date: now.toISOString().split('T')[0],
-      time: now.toLocaleTimeString('en-IN', { hour12: false }),
-      isPaid: false,
-      deliveredBy: delivery.deliveredBy,
-      deliveredByName: deliverer ? deliverer.name : 'Unknown'
-    };
-    setSales(prev => [...prev, newSale]);
-    
-    toast({
-      title: "Delivery Recorded",
-      description: `${delivery.quantity} cups delivered to ${delivery.customerName} by ${deliverer?.name || 'Unknown'}`,
-    });
-  };
-
-  const markPaymentDone = (saleId: string, paidAmount: number) => {
-    setSales(prev => prev.map(sale => 
-      sale.id === saleId ? { ...sale, isPaid: true, paidAmount } : sale
-    ));
-    toast({
-      title: "Payment Done",
-      description: `Payment of ₹${paidAmount} received and marked as done`,
-    });
-  };
-
-  // Show login if no user is logged in
-  if (!currentUser) {
-    return <LoginForm onLogin={handleLogin} />;
+  // Show auth if no user is logged in
+  if (!user || !profile) {
+    return <Auth onAuthSuccess={() => {}} />;
   }
 
   // Show customer dashboard for customers
-  if (currentUser.role === 'customer') {
+  if (profile.role === 'customer') {
     return (
       <CustomerDashboard 
-        user={currentUser} 
-        sales={sales} 
-        onLogout={handleLogout} 
+        user={{
+          id: profile.id,
+          name: profile.name,
+          phone: profile.phone,
+          address: profile.address || '',
+          role: profile.role,
+          qrCode: '',
+          joinDate: profile.created_at
+        }}
+        sales={sales.map(sale => ({
+          id: sale.id,
+          customerId: sale.customer_id,
+          customerName: sale.customer_name,
+          quantity: sale.quantity,
+          pricePerCup: sale.price_per_cup,
+          totalAmount: sale.total_amount,
+          date: sale.sale_date,
+          time: sale.sale_time,
+          isPaid: sale.is_paid,
+          paidAmount: sale.paid_amount,
+          deliveredBy: sale.delivered_by || '',
+          deliveredByName: sale.delivered_by_name
+        }))}
+        onLogout={logout} 
       />
     );
   }
 
   // Show deliverer dashboard for deliverers
-  if (currentUser.role === 'deliverer') {
+  if (profile.role === 'deliverer') {
     return (
       <DelivererDashboard 
-        user={currentUser} 
-        deliveries={deliveries} 
-        onAddDelivery={addDelivery}
-        onLogout={handleLogout} 
+        user={{
+          id: profile.id,
+          name: profile.name,
+          phone: profile.phone,
+          address: profile.address || '',
+          role: profile.role,
+          qrCode: '',
+          joinDate: profile.created_at
+        }}
+        deliveries={deliveries.map(delivery => ({
+          id: delivery.id,
+          customerId: delivery.customer_id,
+          customerName: delivery.customer_name,
+          quantity: delivery.quantity,
+          deliveredBy: delivery.delivered_by,
+          date: delivery.delivery_date,
+          time: delivery.delivery_time
+        }))}
+        onAddDelivery={async (deliveryData) => {
+          await addDelivery({
+            customer_id: deliveryData.customerId,
+            customer_name: deliveryData.customerName,
+            quantity: deliveryData.quantity,
+            delivered_by: deliveryData.deliveredBy
+          });
+        }}
+        onLogout={logout} 
       />
     );
   }
 
-  // Admin dashboard (existing code)
-  const totalSalesToday = sales.filter(sale => sale.date === new Date().toISOString().split('T')[0]);
-  const totalRevenue = sales.reduce((sum, sale) => sum + (sale.paidAmount || sale.totalAmount), 0);
-  const pendingPayments = sales.filter(sale => !sale.isPaid).reduce((sum, sale) => sum + sale.totalAmount, 0);
+  // Admin dashboard
+  const totalSalesToday = sales.filter(sale => sale.sale_date === new Date().toISOString().split('T')[0]);
+  const totalRevenue = sales.reduce((sum, sale) => sum + (sale.paid_amount || sale.total_amount), 0);
+  const pendingPayments = sales.filter(sale => !sale.is_paid).reduce((sum, sale) => sum + sale.total_amount, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-chai-50 to-tea-50">
@@ -227,14 +130,14 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Chai Wala Dashboard</h1>
-                <p className="text-gray-600 text-sm sm:text-base">Welcome, {currentUser.name}</p>
+                <p className="text-gray-600 text-sm sm:text-base">Welcome, {profile.name}</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant={userRole === 'admin' ? 'default' : 'secondary'} className="text-sm">
-                {userRole === 'admin' ? 'Admin Mode' : 'User Mode'}
+              <Badge variant="default" className="text-sm">
+                {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)} Mode
               </Badge>
-              <Button onClick={handleLogout} variant="outline" size="sm">
+              <Button onClick={logout} variant="outline" size="sm">
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
@@ -244,15 +147,40 @@ const Index = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* User Role Selector */}
         {/* Dashboard Stats */}
         <div className="mb-8">
           <DashboardStats 
-            customers={customers}
-            sales={sales}
+            customers={customers.map(customer => ({
+              id: customer.id,
+              name: customer.name,
+              phone: customer.phone,
+              address: customer.address,
+              joinDate: customer.join_date
+            }))}
+            sales={sales.map(sale => ({
+              id: sale.id,
+              customerId: sale.customer_id,
+              customerName: sale.customer_name,
+              quantity: sale.quantity,
+              pricePerCup: sale.price_per_cup,
+              totalAmount: sale.total_amount,
+              date: sale.sale_date,
+              time: sale.sale_time,
+              isPaid: sale.is_paid
+            }))}
             totalRevenue={totalRevenue}
             pendingPayments={pendingPayments}
-            totalSalesToday={totalSalesToday}
+            totalSalesToday={totalSalesToday.map(sale => ({
+              id: sale.id,
+              customerId: sale.customer_id,
+              customerName: sale.customer_name,
+              quantity: sale.quantity,
+              pricePerCup: sale.price_per_cup,
+              totalAmount: sale.total_amount,
+              date: sale.sale_date,
+              time: sale.sale_time,
+              isPaid: sale.is_paid
+            }))}
           />
         </div>
 
@@ -266,6 +194,7 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
+            {/* ... keep existing code (dashboard overview cards) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -276,7 +205,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {customers.slice(-5).reverse().map(customer => (
+                    {customers.slice(0, 5).map(customer => (
                       <div key={customer.id} className="flex items-center justify-between p-3 bg-chai-50 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-chai-200 rounded-full flex items-center justify-center">
@@ -288,7 +217,7 @@ const Index = () => {
                           </div>
                         </div>
                         <Badge variant="outline" className="bg-white">
-                          {customer.joinDate}
+                          {customer.join_date}
                         </Badge>
                       </div>
                     ))}
@@ -308,7 +237,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {totalSalesToday.slice(-5).reverse().map(sale => (
+                    {totalSalesToday.slice(0, 5).map(sale => (
                       <div key={sale.id} className="flex items-center justify-between p-3 bg-tea-50 rounded-lg">
                         <div>
                           <p className="font-medium text-gray-900">{sale.customerName}</p>
@@ -332,46 +261,80 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="customers">
-            {userRole === 'admin' ? (
-              <CustomerManager customers={customers} onAddCustomer={addCustomer} />
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customers</CardTitle>
-                  <CardDescription>Only admin can manage customers</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <p className="text-gray-600">Switch to admin mode to manage customers</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <CustomerManager 
+              customers={customers.map(customer => ({
+                id: customer.id,
+                name: customer.name,
+                phone: customer.phone,
+                address: customer.address,
+                joinDate: customer.join_date
+              }))}
+              onAddCustomer={async (customerData) => {
+                await addCustomer({
+                  name: customerData.name,
+                  phone: customerData.phone,
+                  address: customerData.address,
+                  join_date: new Date().toISOString().split('T')[0]
+                });
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="sales">
-            {userRole === 'admin' ? (
-              <SalesTracker customers={customers} sales={sales} onAddSale={addSale} />
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sales</CardTitle>
-                  <CardDescription>Only admin can record sales</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <p className="text-gray-600">Switch to admin mode to record sales</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <SalesTracker 
+              customers={customers.map(customer => ({
+                id: customer.id,
+                name: customer.name,
+                phone: customer.phone,
+                address: customer.address,
+                joinDate: customer.join_date
+              }))}
+              sales={sales.map(sale => ({
+                id: sale.id,
+                customerId: sale.customer_id,
+                customerName: sale.customer_name,
+                quantity: sale.quantity,
+                pricePerCup: sale.price_per_cup,
+                totalAmount: sale.total_amount,
+                date: sale.sale_date,
+                time: sale.sale_time,
+                isPaid: sale.is_paid,
+                paidAmount: sale.paid_amount,
+                deliveredBy: sale.delivered_by || '',
+                deliveredByName: sale.delivered_by_name
+              }))}
+              onAddSale={async (saleData) => {
+                await addSale({
+                  customer_id: saleData.customerId,
+                  customer_name: saleData.customerName,
+                  quantity: saleData.quantity,
+                  price_per_cup: saleData.pricePerCup,
+                  total_amount: saleData.totalAmount,
+                  is_paid: saleData.isPaid,
+                  delivered_by: profile.id
+                });
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="payments">
             <SimplePaymentManager 
-              sales={sales} 
-              onMarkPaid={markPaymentDone} 
-              isAdmin={userRole === 'admin'}
+              sales={sales.map(sale => ({
+                id: sale.id,
+                customerId: sale.customer_id,
+                customerName: sale.customer_name,
+                quantity: sale.quantity,
+                pricePerCup: sale.price_per_cup,
+                totalAmount: sale.total_amount,
+                date: sale.sale_date,
+                time: sale.sale_time,
+                isPaid: sale.is_paid,
+                paidAmount: sale.paid_amount,
+                deliveredBy: sale.delivered_by || '',
+                deliveredByName: sale.delivered_by_name
+              }))}
+              onMarkPaid={markPaymentDone}
+              isAdmin={profile.role === 'admin'}
             />
           </TabsContent>
         </Tabs>
