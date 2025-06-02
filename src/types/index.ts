@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -20,7 +19,8 @@ export interface Sale {
   time: string;
   isPaid: boolean;
   paidAmount?: number;
-  deliveredBy?: string;
+  deliveredBy: string;
+  deliveredByName?: string;
 }
 
 export interface DeliveryRecord {

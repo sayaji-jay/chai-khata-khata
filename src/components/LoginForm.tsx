@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,13 +15,20 @@ interface LoginFormProps {
 export const LoginForm = ({ onLogin }: LoginFormProps) => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
 
   const handleLogin = () => {
+    setError('');
+    if (!selectedUserId || !phone) {
+      setError('Please select a user and enter phone number');
+      return;
+    }
+
     const user = dummyUsers.find(u => u.id === selectedUserId);
     if (user && user.phone === phone) {
       onLogin(user);
     } else {
-      alert('Invalid credentials! Please check user and phone number.');
+      setError('Invalid credentials! Please check user and phone number.');
     }
   };
 
@@ -41,32 +47,21 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="user">Select User</Label>
-            <Select onValueChange={setSelectedUserId}>
-              <SelectTrigger>
+            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose a user" />
               </SelectTrigger>
               <SelectContent>
-                <optgroup label="Admin">
-                  {getRoleUsers('admin').map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name} ({user.role})
-                    </SelectItem>
-                  ))}
-                </optgroup>
-                <optgroup label="Customers">
-                  {getRoleUsers('customer').map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name} ({user.role})
-                    </SelectItem>
-                  ))}
-                </optgroup>
-                <optgroup label="Deliverers">
-                  {getRoleUsers('deliverer').map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name} ({user.role})
-                    </SelectItem>
-                  ))}
-                </optgroup>
+                {/* Admin Users */}
+                <SelectItem value="admin-001">Admin User (admin)</SelectItem>
+                
+                {/* Customer Users */}
+                <SelectItem value="cust-001">Rahul Sharma (customer)</SelectItem>
+                <SelectItem value="cust-002">Priya Patel (customer)</SelectItem>
+                <SelectItem value="cust-003">Amit Kumar (customer)</SelectItem>
+                
+                {/* Deliverer Users */}
+                <SelectItem value="del-001">Chai Delivery Boy (deliverer)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -81,6 +76,12 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
               onChange={(e) => setPhone(e.target.value)}
             />
           </div>
+
+          {error && (
+            <div className="text-sm text-red-500 text-center">
+              {error}
+            </div>
+          )}
 
           <Button onClick={handleLogin} className="w-full bg-chai-600 hover:bg-chai-700">
             <User className="w-4 h-4 mr-2" />

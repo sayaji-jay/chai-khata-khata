@@ -26,6 +26,8 @@ interface Sale {
   date: string;
   time: string;
   isPaid: boolean;
+  deliveredBy?: string;
+  deliveredByName?: string;
 }
 
 interface SalesTrackerProps {
@@ -222,10 +224,18 @@ export const SalesTracker = ({ customers, sales, onAddSale }: SalesTrackerProps)
                               <h4 className="font-semibold text-gray-900">{sale.customerName}</h4>
                               <div className="text-sm text-gray-600 space-y-1">
                                 <p>{sale.quantity} cups × ₹{sale.pricePerCup} = ₹{sale.totalAmount}</p>
-                                <p className="flex items-center space-x-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>{sale.time}</span>
-                                </p>
+                                <div className="flex items-center space-x-4">
+                                  <p className="flex items-center">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    <span>{sale.time}</span>
+                                  </p>
+                                  {sale.deliveredBy && (
+                                    <p className="flex items-center">
+                                      <User className="w-3 h-3 mr-1" />
+                                      <span>Delivered by: {sale.deliveredByName || 'Unknown'}</span>
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <Badge variant={sale.isPaid ? "default" : "destructive"}>

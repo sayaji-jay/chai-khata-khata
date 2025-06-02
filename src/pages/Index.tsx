@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -141,6 +140,8 @@ const Index = () => {
 
   const addDelivery = (delivery: Omit<DeliveryRecord, 'id' | 'date' | 'time'>) => {
     const now = new Date();
+    const deliverer = dummyUsers.find(u => u.id === delivery.deliveredBy);
+    
     const newDelivery: DeliveryRecord = {
       id: Date.now().toString(),
       date: now.toISOString().split('T')[0],
@@ -149,7 +150,7 @@ const Index = () => {
     };
     setDeliveries(prev => [...prev, newDelivery]);
     
-    // Also add to sales
+    // Also add to sales with deliverer information
     const newSale: Sale = {
       id: Date.now().toString() + '-sale',
       customerId: delivery.customerId,
@@ -160,9 +161,15 @@ const Index = () => {
       date: now.toISOString().split('T')[0],
       time: now.toLocaleTimeString('en-IN', { hour12: false }),
       isPaid: false,
-      deliveredBy: delivery.deliveredBy
+      deliveredBy: delivery.deliveredBy,
+      deliveredByName: deliverer ? deliverer.name : 'Unknown'
     };
     setSales(prev => [...prev, newSale]);
+    
+    toast({
+      title: "Delivery Recorded",
+      description: `${delivery.quantity} cups delivered to ${delivery.customerName} by ${deliverer?.name || 'Unknown'}`,
+    });
   };
 
   const markPaymentDone = (saleId: string, paidAmount: number) => {
@@ -238,8 +245,6 @@ const Index = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* User Role Selector */}
-        <UserRoleSelector currentRole={userRole} onRoleChange={setUserRole} />
-
         {/* Dashboard Stats */}
         <div className="mb-8">
           <DashboardStats 

@@ -1,12 +1,12 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Coffee, Clock, Calendar, QrCode, LogOut } from 'lucide-react';
-import { User, Sale } from '@/types';
+import { Coffee, Clock, Calendar, QrCode, LogOut, User } from 'lucide-react';
+import { User as UserType, Sale } from '@/types';
+import { dummyUsers } from '@/data/dummyUsers';
 
 interface CustomerDashboardProps {
-  user: User;
+  user: UserType;
   sales: Sale[];
   onLogout: () => void;
 }
@@ -20,6 +20,11 @@ export const CustomerDashboard = ({ user, sales, onLogout }: CustomerDashboardPr
   const allUserSales = sales.filter(sale => sale.customerId === user.id);
   const totalCupsAllTime = allUserSales.reduce((sum, sale) => sum + sale.quantity, 0);
   const totalSpentAllTime = allUserSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+
+  const getDelivererName = (deliveredBy: string) => {
+    const deliverer = dummyUsers.find(u => u.id === deliveredBy);
+    return deliverer ? deliverer.name : 'Unknown';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-chai-50 to-tea-50">
@@ -113,10 +118,16 @@ export const CustomerDashboard = ({ user, sales, onLogout }: CustomerDashboardPr
                       <Coffee className="w-5 h-5 text-chai-600" />
                       <div>
                         <p className="font-medium text-gray-900">{sale.quantity} cups</p>
-                        <p className="text-sm text-gray-600 flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {sale.time}
-                        </p>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <p className="flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {sale.time}
+                          </p>
+                          <p className="flex items-center">
+                            <User className="w-3 h-3 mr-1" />
+                            Delivered by: {getDelivererName(sale.deliveredBy)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
@@ -129,7 +140,7 @@ export const CustomerDashboard = ({ user, sales, onLogout }: CustomerDashboardPr
                 ))}
               </div>
             )}
-          </div>
+          </CardContent>
         </Card>
 
         {/* Recent History */}
@@ -151,9 +162,13 @@ export const CustomerDashboard = ({ user, sales, onLogout }: CustomerDashboardPr
                   <div key={sale.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">{sale.quantity} cups</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(sale.date).toLocaleDateString('en-IN')} at {sale.time}
-                      </p>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p>{new Date(sale.date).toLocaleDateString('en-IN')} at {sale.time}</p>
+                        <p className="flex items-center">
+                          <User className="w-3 h-3 mr-1" />
+                          Delivered by: {getDelivererName(sale.deliveredBy)}
+                        </p>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">₹{sale.totalAmount}</p>
@@ -165,7 +180,7 @@ export const CustomerDashboard = ({ user, sales, onLogout }: CustomerDashboardPr
                 ))}
               </div>
             )}
-          </div>
+          </CardContent>
         </Card>
       </div>
     </div>
