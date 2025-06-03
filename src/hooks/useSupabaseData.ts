@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, Customer, Delivery } from '@/types/database';
@@ -36,7 +37,7 @@ export const useSupabaseData = () => {
 
     const deliveriesSubscription = supabase
       .channel('deliveries-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_records' }, () => {
         fetchDeliveries();
       })
       .subscribe();
@@ -87,7 +88,7 @@ export const useSupabaseData = () => {
   const fetchDeliveries = async () => {
     try {
       const { data, error } = await supabase
-        .from('deliveries')
+        .from('delivery_records')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -102,7 +103,7 @@ export const useSupabaseData = () => {
     }
   };
 
-  const addCustomer = async (customerData: Partial<Customer>) => {
+  const addCustomer = async (customerData: Omit<Customer, 'id' | 'created_at'>) => {
     try {
       const { data, error } = await supabase
         .from('customers')
@@ -128,7 +129,7 @@ export const useSupabaseData = () => {
     }
   };
 
-  const addSale = async (saleData: Partial<Sale>) => {
+  const addSale = async (saleData: Omit<Sale, 'id' | 'created_at' | 'sale_date' | 'sale_time'>) => {
     try {
       const { data, error } = await supabase
         .from('sales')
@@ -158,10 +159,10 @@ export const useSupabaseData = () => {
     }
   };
 
-  const addDelivery = async (deliveryData: Partial<Delivery>) => {
+  const addDelivery = async (deliveryData: Omit<Delivery, 'id' | 'created_at' | 'delivery_date' | 'delivery_time'>) => {
     try {
       const { data, error } = await supabase
-        .from('deliveries')
+        .from('delivery_records')
         .insert([{
           ...deliveryData,
           delivery_date: new Date().toISOString().split('T')[0],
