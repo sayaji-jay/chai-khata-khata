@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -208,7 +209,6 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            {/* ... keep existing code (dashboard overview cards) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -254,13 +254,13 @@ const Index = () => {
                     {totalSalesToday.slice(0, 5).map(sale => (
                       <div key={sale.id} className="flex items-center justify-between p-3 bg-tea-50 rounded-lg">
                         <div>
-                          <p className="font-medium text-gray-900">{sale.customer_name}</p>
-                          <p className="text-sm text-gray-600">{sale.quantity} cups • {sale.sale_time}</p>
+                          <p className="font-medium text-gray-900">{sale.customerName}</p>
+                          <p className="text-sm text-gray-600">{sale.quantity} cups • {sale.time}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">₹{sale.total_amount}</p>
-                          <Badge variant={sale.is_paid ? "default" : "destructive"} className="text-xs">
-                            {sale.is_paid ? "Paid" : "Pending"}
+                          <p className="font-semibold text-gray-900">₹{sale.totalAmount}</p>
+                          <Badge variant={sale.isPaid ? "default" : "destructive"} className="text-xs">
+                            {sale.isPaid ? "Paid" : "Pending"}
                           </Badge>
                         </div>
                       </div>
