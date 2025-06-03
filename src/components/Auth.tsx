@@ -1,20 +1,21 @@
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Coffee, User, LogIn, UserPlus } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Coffee, User, LogIn, UserPlus, KeyRound, ArrowLeft } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthProps {
   onAuthSuccess: () => void;
 }
 
+type AuthMode = 'login' | 'signup' | 'forgotPassword';
+
 export const Auth = ({ onAuthSuccess }: AuthProps) => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -36,7 +37,7 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
@@ -47,11 +48,12 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
         title: "Success",
         description: "Logged in successfully!"
       });
+      
       onAuthSuccess();
     } catch (error: any) {
       toast({
         title: "Login Error",
-        description: error.message || "Failed to login",
+        description: error.message,
         variant: "destructive"
       });
     } finally {
@@ -60,10 +62,10 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
   };
 
   const handleSignup = async () => {
-    if (!email || !password || !name || !phone) {
+    if (!email || !password || !name || !phone || !address) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all fields",
         variant: "destructive"
       });
       return;
@@ -71,13 +73,11 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
 
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl,
           data: {
             name,
             phone,
@@ -87,24 +87,70 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
         }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+
+      // Create profile
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: authData.user.id,
+              name,
+              phone,
+              address,
+              role
+            }
+          ]);
+
+        if (profileError) throw profileError;
+      }
 
       toast({
         title: "Success",
         description: "Account created successfully! Please check your email for verification."
       });
       
-      // Switch to login form after successful signup
-      setIsLogin(true);
-      setEmail('');
-      setPassword('');
-      setName('');
-      setPhone('');
-      setAddress('');
+      setMode('login');
     } catch (error: any) {
       toast({
         title: "Signup Error",
-        description: error.message || "Failed to create account",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter your email",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Password reset instructions sent to your email"
+      });
+      
+      setMode('login');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
         variant: "destructive"
       });
     } finally {
@@ -117,40 +163,138 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="w-16 h-16 bg-gradient-to-r from-chai-500 to-chai-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Coffee className="w-8 h-8 text-white" />
+            {mode === 'forgotPassword' ? (
+              <KeyRound className="w-8 h-8 text-white" />
+            ) : (
+              <Coffee className="w-8 h-8 text-white" />
+            )}
           </div>
           <CardTitle className="text-2xl">
-            {isLogin ? 'Chai Wala Login' : 'Join Chai Wala'}
+            {mode === 'login' && 'Chai Wala Login'}
+            {mode === 'signup' && 'Join Chai Wala'}
+            {mode === 'forgotPassword' && 'Reset Password'}
           </CardTitle>
           <CardDescription>
-            {isLogin ? 'Sign in to your account' : 'Create your account'}
+            {mode === 'login' && 'Sign in to your account'}
+            {mode === 'signup' && 'Create your account'}
+            {mode === 'forgotPassword' && 'Enter your email to reset password'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          {!isLogin && (
+          {mode === 'forgotPassword' && (
             <>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <Button 
+                onClick={handleForgotPassword}
+                className="w-full bg-chai-600 hover:bg-chai-700"
+                disabled={loading}
+              >
+                {loading ? 'Please wait...' : 'Send Reset Instructions'}
+              </Button>
+
+              <div className="text-center">
+                <Button
+                  variant="link"
+                  onClick={() => setMode('login')}
+                  className="text-chai-600 hover:text-chai-700"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Login
+                </Button>
+              </div>
+            </>
+          )}
+
+          {mode === 'login' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <Button 
+                onClick={handleLogin}
+                className="w-full bg-chai-600 hover:bg-chai-700"
+                disabled={loading}
+              >
+                {loading ? 'Please wait...' : (
+                  <>
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Login
+                  </>
+                )}
+              </Button>
+
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="link"
+                  onClick={() => setMode('signup')}
+                  className="text-chai-600 hover:text-chai-700"
+                >
+                  Don't have an account? Sign up
+                </Button>
+                <Button
+                  variant="link"
+                  onClick={() => setMode('forgotPassword')}
+                  className="text-chai-600 hover:text-chai-700"
+                >
+                  Forgot Password?
+                </Button>
+              </div>
+            </>
+          )}
+
+          {mode === 'signup' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="name">Name *</Label>
                 <Input
@@ -197,37 +341,30 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <Button 
+                onClick={handleSignup}
+                className="w-full bg-chai-600 hover:bg-chai-700"
+                disabled={loading}
+              >
+                {loading ? 'Please wait...' : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Sign Up
+                  </>
+                )}
+              </Button>
+
+              <div className="text-center">
+                <Button
+                  variant="link"
+                  onClick={() => setMode('login')}
+                  className="text-chai-600 hover:text-chai-700"
+                >
+                  Already have an account? Login
+                </Button>
+              </div>
             </>
-          )}
-
-          <Button 
-            onClick={isLogin ? handleLogin : handleSignup} 
-            className="w-full bg-chai-600 hover:bg-chai-700"
-            disabled={loading}
-          >
-            {loading ? 'Please wait...' : (
-              <>
-                {isLogin ? <LogIn className="w-4 h-4 mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}
-                {isLogin ? 'Login' : 'Sign Up'}
-              </>
-            )}
-          </Button>
-
-          <div className="text-center">
-            <Button
-              variant="link"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-chai-600 hover:text-chai-700"
-            >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
-            </Button>
-          </div>
-
-          {isLogin && (
-            <div className="text-sm text-gray-600 space-y-1">
-              <p><strong>Demo Accounts:</strong></p>
-              <p>Create your own account or use existing credentials if available</p>
-            </div>
           )}
         </CardContent>
       </Card>

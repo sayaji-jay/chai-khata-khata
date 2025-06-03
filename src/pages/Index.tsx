@@ -13,6 +13,7 @@ import { Auth } from '@/components/Auth';
 import { Users, Clock, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { SaleFrontend, CustomerFrontend, DeliveryFrontend, ProfileFrontend } from '@/types/database';
 
 const Index = () => {
   const { user, profile, loading: authLoading, logout } = useAuth();
@@ -114,7 +115,20 @@ const Index = () => {
   }
 
   // Admin dashboard
-  const totalSalesToday = sales.filter(sale => sale.sale_date === new Date().toISOString().split('T')[0]);
+  const totalSalesToday = sales.map(sale => ({
+    id: sale.id,
+    customerId: sale.customer_id,
+    customerName: sale.customer_name,
+    quantity: sale.quantity,
+    pricePerCup: sale.price_per_cup,
+    totalAmount: sale.total_amount,
+    date: sale.sale_date,
+    time: sale.sale_time,
+    isPaid: sale.is_paid,
+    paidAmount: sale.paid_amount,
+    deliveredBy: sale.delivered_by,
+    deliveredByName: sale.delivered_by_name
+  })).filter(sale => sale.date === new Date().toISOString().split('T')[0]);
   const totalRevenue = sales.reduce((sum, sale) => sum + (sale.paid_amount || sale.total_amount), 0);
   const pendingPayments = sales.filter(sale => !sale.is_paid).reduce((sum, sale) => sum + sale.total_amount, 0);
 
@@ -172,14 +186,14 @@ const Index = () => {
             pendingPayments={pendingPayments}
             totalSalesToday={totalSalesToday.map(sale => ({
               id: sale.id,
-              customerId: sale.customer_id,
-              customerName: sale.customer_name,
+              customerId: sale.customerId,
+              customerName: sale.customerName,
               quantity: sale.quantity,
-              pricePerCup: sale.price_per_cup,
-              totalAmount: sale.total_amount,
-              date: sale.sale_date,
-              time: sale.sale_time,
-              isPaid: sale.is_paid
+              pricePerCup: sale.pricePerCup,
+              totalAmount: sale.totalAmount,
+              date: sale.date,
+              time: sale.time,
+              isPaid: sale.isPaid
             }))}
           />
         </div>
@@ -240,13 +254,13 @@ const Index = () => {
                     {totalSalesToday.slice(0, 5).map(sale => (
                       <div key={sale.id} className="flex items-center justify-between p-3 bg-tea-50 rounded-lg">
                         <div>
-                          <p className="font-medium text-gray-900">{sale.customerName}</p>
-                          <p className="text-sm text-gray-600">{sale.quantity} cups • {sale.time}</p>
+                          <p className="font-medium text-gray-900">{sale.customer_name}</p>
+                          <p className="text-sm text-gray-600">{sale.quantity} cups • {sale.sale_time}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-gray-900">₹{sale.totalAmount}</p>
-                          <Badge variant={sale.isPaid ? "default" : "destructive"} className="text-xs">
-                            {sale.isPaid ? "Paid" : "Pending"}
+                          <p className="font-semibold text-gray-900">₹{sale.total_amount}</p>
+                          <Badge variant={sale.is_paid ? "default" : "destructive"} className="text-xs">
+                            {sale.is_paid ? "Paid" : "Pending"}
                           </Badge>
                         </div>
                       </div>
